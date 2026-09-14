@@ -3,7 +3,13 @@ const KEY="sb_publishable_03VYlZENfp-OxRuyZvDe9g_tKS5ztDx";
 const db=supabase.createClient(SUPABASE_URL,KEY);
 
 const $=s=>document.querySelector(s);
-const esc=s=>String(s||"").replace(/[&<>"']/g,x=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[x]));
+const esc=s=>String(s||"").replace(/[&<>"']/g,x=>({
+  "&":"&amp;",
+  "<":"&lt;",
+  ">":"&gt;",
+  '"':"&quot;",
+  "'":"&#39;"
+}[x]));
 
 const cols=[
   ["inbox","Входящие","#94a3b8"],
@@ -231,7 +237,7 @@ $("#export").onclick=()=>{
     .join("\n");
 
   let a=document.createElement("a");
-  a.href=URL.createObjectURL(new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8}));
+  a.href=URL.createObjectURL(new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"}));
   a.download="выполненные-задачи.csv";
   a.click()
 };
