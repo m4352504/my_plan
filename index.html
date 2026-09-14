@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0f6fae">
+  <title>Мой план</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main id="auth-view" class="auth-shell">
+    <section class="auth-card">
+      <p class="eyebrow">МОЙ ПЛАН</p><h1>Задачи и ход работы</h1>
+      <p class="muted">Твоя личная доска. Зайди по почте, чтобы видеть только свои задачи.</p>
+      <form id="auth-form"><label>Почта<input id="email" type="email" required autocomplete="email"></label>
+        <label>Пароль<input id="password" type="password" required minlength="6" autocomplete="current-password"></label>
+        <button type="submit">Войти</button>
+      </form>
+      <button id="signup" class="text-button">Создать аккаунт</button><p id="auth-message" class="notice"></p>
+    </section>
+  </main>
+  <main id="app-view" hidden>
+    <header><div><p class="eyebrow">МОЙ ПЛАН</p><h1>Задачи и ход работы</h1></div>
+      <div class="header-actions"><button id="export" class="secondary">Выгрузить сделанное</button><button id="new-task">＋ Новая задача</button><button id="logout" class="icon" title="Выйти">↗</button></div>
+    </header>
+    <section class="toolbar"><div class="search"><span>⌕</span><input id="search" placeholder="Поиск по задачам и тегам"></div>
+      <select id="category-filter"><option value="">Все категории</option><option value="work">Работа</option><option value="personal">Личное</option><option value="home">Дом</option></select>
+      <select id="status-filter"><option value="">Все статусы</option><option value="inbox">Входящие</option><option value="progress">В работе</option><option value="waiting">На контроле</option><option value="done">Сделано</option></select>
+    </section>
+    <p id="load-error" class="error" hidden></p>
+    <section id="board" class="board"></section>
+  </main>
+  <dialog id="task-dialog"><form id="task-form" method="dialog"><div class="dialog-top"><h2 id="dialog-title">Новая задача</h2><button class="icon" value="cancel">×</button></div>
+    <div class="dialog-grid"><section class="details"><input id="task-title" placeholder="Название задачи" required class="title-input">
+      <textarea id="task-description" placeholder="Что нужно сделать, детали, ссылки…"></textarea>
+      <section id="activity" hidden><h3>Ход работы</h3><div id="comments"></div><div class="comment-add"><input id="comment-input" placeholder="Зафиксировать промежуточный результат"><button id="add-comment" type="button">Добавить</button></div></section>
+    </section><aside class="properties">
+      <label>Статус<select id="task-status"><option value="inbox">Входящие</option><option value="progress">В работе</option><option value="waiting">На контроле</option><option value="done">Сделано</option></select></label>
+      <label>Категория<select id="task-category"><option value="work">Работа</option><option value="personal">Личное</option><option value="home">Дом</option></select></label>
+      <label>Дедлайн<input id="task-due" type="date"></label><label>Теги<input id="task-tags" placeholder="CRM, отчёт"></label>
+      <button id="save-task" type="submit">Сохранить</button><button id="delete-task" type="button" class="danger" hidden>Удалить задачу</button>
+    </aside></div></form></dialog>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./app.js"></script>
+</body></html>
