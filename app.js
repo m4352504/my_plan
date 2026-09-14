@@ -3,14 +3,7 @@ const KEY="sb_publishable_03VYlZENfp-OxRuyZvDe9g_tKS5ztDx";
 const db=supabase.createClient(SUPABASE_URL,KEY);
 
 const $=s=>document.querySelector(s);
-
-const esc=s=>String(s||"").replace(/[&<>"']/g,x=>({
-  "&":"&amp;",
-  "<":"&lt;",
-  ">":"&gt;",
-  '"':"&quot;",
-  "'":"&#39;"
-}[x]));
+const esc=s=>String(s||"").replace(/[&<>"']/g,x=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[x]));
 
 const cols=[
   ["inbox","Входящие","#94a3b8"],
@@ -21,14 +14,14 @@ const cols=[
 
 let tasks=[];
 let comments=[];
+let visibleTasks=[];
 let current=null;
 
 const fmt=x=>new Date(x).toLocaleString("ru-RU",{
-  day:"2-digit",
-  month:"short",
-  hour:"2-digit",
-  minute:"2-digit"
+  day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"
 });
+
+const dateOnly=x=>x?String(x).slice(0,10):"";
 
 async function showApp(){
   $("#auth-view").hidden=true;
@@ -60,70 +53,57 @@ function render(){
   let q=$("#search").value.toLowerCase();
   let cat=$("#category-filter").value;
   let st=$("#status-filter").value;
+  let createdFrom=$("#created-from").value;
+  let createdTo=$("#created-to").value;
+  let completedFrom=$("#completed-from").value;
+  let completedTo=$("#completed-to").value;
 
-  let shown=tasks.filter(t=>
-    (!cat||t.category===cat)&&
-    (!st||t.status===st)&&
-    ((t.title+" "+t.description+" "+(t.tags||[]).join(" ")).toLowerCase().includes(q))
-  );
+  visibleTasks=tasks.filter(t=>{
+    let created=dateOnly(t.created_at);
+    let completed=dateOnly(t.completed_at);
+    let text=(t.title+" "+t.description+" "+(t.tags||[]).join(" ")).toLowerCase();
 
-  $("#board").innerHTML=cols.map(c=>{
-    let list=shown.filter(t=>t.status===c[0]);
-
-    return `
-      <section class="column">
-        <div class="column-head">
-          <span>
-            <i style="background:${c[2]}"></i>
-            ${c[1]}
-            <em class="count">${list.length}</em>
-          </span>
-          <button class="add-small" data-new="${c[0]}">＋</button>
-        </div>
-        <div class="cards">
-          ${list.map(card).join("")}
-          ${!list.length?
-            `<button class="card" data-new="${c[0]}" style="color:#8994a6;text-align:center;border-style:dashed">Добавить задачу</button>`
-            :""
-          }
-        </div>
-      </section>
-    `
-  }).join("");
-
-  document.querySelectorAll("[data-task]").forEach(x=>{
-    x.onclick=()=>openTask(x.dataset.task)
+    return (!cat||t.category===cat)&&
+      (!st||t.status===st)&&
+      text.includes(q)&&
+      (!createdFrom||created>=createdFrom)&&
+      (!createdTo||created<=createdTo)&&
+      (!completedFrom||completed>=completedFrom)&&
+      (!completedTo||completed<=completedTo)
   });
 
-  document.querySelectorAll("[data-new]").forEach(x=>{
-    x.onclick=()=>openTask(null,x.dataset.new)
-  })
+  $("#board").innerHTML=cols.map(c=>{
+    let list=visibleTasks.filter(t=>t.status===c[0]);
+
+    return `<section class="column">
+      <div class="column-head">
+        <span><i style="background:${c[2]}"></i>${c[1]}<em class="count">${list.length}</em></span>
+        <button class="add-small" data-new="${c[0]}">＋</button>
+      </div>
+      <div class="cards">
+        ${list.map(card).join("")}
+        ${!list.length?`<button class="card" data-new="${c[0]}" style="color:#8994a6;text-align:center;border-style:dashed">Добавить задачу</button>`:""}
+      </div>
+    </section>`
+  }).join("");
+
+  document.querySelectorAll("[data-task]").forEach(x=>x.onclick=()=>openTask(x.dataset.task));
+  document.querySelectorAll("[data-new]").forEach(x=>x.onclick=()=>openTask(null,x.dataset.new))
 }
 
 function card(t){
   let n=comments.filter(c=>c.task_id===t.id).length;
-
-  let due=t.due_date
-    ?new Date(t.due_date+"T00:00:00").toLocaleDateString("ru-RU",{day:"2-digit",month:"short"})
-    :"";
-
+  let due=t.due_date?new Date(t.due_date+"T00:00:00").toLocaleDateString("ru-RU",{day:"2-digit",month:"short"}):"";
   let late=t.due_date&&new Date(t.due_date+"T00:00:00")<new Date(new Date().toDateString());
 
-  return `
-    <button class="card" data-task="${t.id}">
-      <div class="card-title">
-        ${esc(t.title)}
-        <i class="dot ${t.category}"></i>
-      </div>
-      <div class="tags">
-        ${(t.tags||[]).slice(0,3).map(x=>`<span class="tag">#${esc(x)}</span>`).join("")}
-      </div>
-      <div class="card-bottom">
-        <span class="${late?"late":""}">${due?"◷ "+due:""}</span>
-        <span>${n?"▢ "+n:""}</span>
-      </div>
-    </button>
-  `
+  return `<button class="card" data-task="${t.id}">
+    <div class="card-title">${esc(t.title)} <i class="dot ${t.category}"></i></div>
+    <div class="tags">${(t.tags||[]).slice(0,3).map(x=>`<span class="tag">#${esc(x)}</span>`).join("")}</div>
+    <div class="card-bottom">
+      <span class="${late?"late":""}">${due?"◷ "+due:""}</span>
+      <span>${n?"▢ "+n:""}</span>
+    </div>
+  </button>`
 }
 
 function openTask(id,status){
@@ -136,18 +116,11 @@ function openTask(id,status){
   $("#task-category").value=current?.category||"work";
   $("#task-due").value=current?.due_date||"";
   $("#task-tags").value=(current?.tags||[]).join(", ");
-
   $("#activity").hidden=!current;
   $("#delete-task").hidden=!current;
 
   $("#comments").innerHTML=current?
-    (
-      comments
-        .filter(x=>x.task_id===current.id)
-        .map(x=>`<div class="comment">${esc(x.body)}<time>${fmt(x.created_at)}</time></div>`)
-        .join("")
-      ||"<p class='muted'>Пока нет комментариев.</p>"
-    )
+    (comments.filter(x=>x.task_id===current.id).map(x=>`<div class="comment">${esc(x.body)}<time>${fmt(x.created_at)}</time></div>`).join("")||"<p class='muted'>Пока нет комментариев.</p>")
     :"";
 
   $("#task-dialog").showModal()
@@ -156,20 +129,28 @@ function openTask(id,status){
 $("#task-form").onsubmit=async e=>{
   e.preventDefault();
 
+  let previousStatus=current?.status||"";
+  let newStatus=$("#task-status").value;
+
   let x={
     title:$("#task-title").value.trim(),
     description:$("#task-description").value.trim(),
-    status:$("#task-status").value,
+    status:newStatus,
     category:$("#task-category").value,
     due_date:$("#task-due").value||null,
-    tags:$("#task-tags").value
-      .split(",")
-      .map(x=>x.trim().replace(/^#/,""))
-      .filter(Boolean),
+    tags:$("#task-tags").value.split(",").map(x=>x.trim().replace(/^#/,"")).filter(Boolean),
     updated_at:new Date().toISOString()
   };
 
   if(!x.title)return;
+
+  if(newStatus==="done"&&previousStatus!=="done"){
+    x.completed_at=new Date().toISOString()
+  }
+
+  if(newStatus!=="done"){
+    x.completed_at=null
+  }
 
   let r=current
     ?db.from("tasks").update(x).eq("id",current.id)
@@ -186,7 +167,6 @@ $("#task-form").onsubmit=async e=>{
 
 $("#add-comment").onclick=async()=>{
   let body=$("#comment-input").value.trim();
-
   if(!body||!current)return;
 
   let result=await db.from("task_comments").insert({
@@ -199,8 +179,7 @@ $("#add-comment").onclick=async()=>{
     return
   }
 
-  await db
-    .from("tasks")
+  await db.from("tasks")
     .update({updated_at:new Date().toISOString()})
     .eq("id",current.id);
 
@@ -210,9 +189,7 @@ $("#add-comment").onclick=async()=>{
 };
 
 $("#delete-task").onclick=async()=>{
-  if(!current)return;
-
-  if(confirm("Удалить задачу вместе с комментариями?")){
+  if(current&&confirm("Удалить задачу вместе с комментариями?")){
     await db.from("tasks").delete().eq("id",current.id);
     $("#task-dialog").close();
     load()
@@ -221,16 +198,27 @@ $("#delete-task").onclick=async()=>{
 
 $("#new-task").onclick=()=>openTask();
 
-$("#search").oninput=render;
-$("#category-filter").onchange=render;
-$("#status-filter").onchange=render;
+[
+  "#search",
+  "#category-filter",
+  "#status-filter",
+  "#created-from",
+  "#created-to",
+  "#completed-from",
+  "#completed-to"
+].forEach(selector=>{
+  $(selector).oninput=render;
+  $(selector).onchange=render
+});
 
 $("#export").onclick=()=>{
-  let rows=tasks
+  let rows=visibleTasks
     .filter(t=>t.status==="done")
     .map(t=>[
       t.title,
       {work:"Работа",personal:"Личное",home:"Дом"}[t.category],
+      dateOnly(t.created_at),
+      dateOnly(t.completed_at),
       t.due_date||"",
       comments
         .filter(c=>c.task_id===t.id)
@@ -238,18 +226,12 @@ $("#export").onclick=()=>{
         .join(" | ")
     ]);
 
-  let csv=["Задача;Категория;Дедлайн;Комментарии"]
-    .concat(
-      rows.map(r=>
-        r.map(x=>'"'+String(x).replaceAll('"','""')+'"').join(";")
-      )
-    )
+  let csv=["Задача;Категория;Дата создания;Дата завершения;Дедлайн;Комментарии"]
+    .concat(rows.map(r=>r.map(x=>'"'+String(x).replaceAll('"','""')+'"').join(";")))
     .join("\n");
 
   let a=document.createElement("a");
-  a.href=URL.createObjectURL(
-    new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"})
-  );
+  a.href=URL.createObjectURL(new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8}));
   a.download="выполненные-задачи.csv";
   a.click()
 };
