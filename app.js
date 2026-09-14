@@ -3,21 +3,29 @@ const $=s=>document.querySelector(s),esc=s=>String(s||"").replace(/[&<>"']/g,x=>
 const cols=[["inbox","Входящие","#94a3b8"],["progress","В работе","#0ea5e9"],["waiting","На контроле","#f59e0b"],["done","Сделано","#10b981"]];let tasks=[],comments=[],current=null;
 const fmt=x=>new Date(x).toLocaleString("ru-RU",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"});
 
+async function showApp(){
+  $("#auth-view").hidden=true;
+  $("#app-view").hidden=false;
+  await load()
+}
+
 async function boot(){
   let s=(await db.auth.getSession()).data.session;
-  $("#auth-view").hidden=!!s;
-  $("#app-view").hidden=!s;
-  if(s)load()
+  if(s)return showApp();
+  $("#auth-view").hidden=false;
+  $("#app-view").hidden=true
 }
 
 async function load(){
   let a=await db.from("tasks").select("*").order("updated_at",{ascending:false}),
       b=await db.from("task_comments").select("*").order("created_at",{ascending:false});
+
   if(a.error||b.error){
     $("#load-error").hidden=false;
     $("#load-error").textContent="Не удалось загрузить задачи.";
     return
   }
+
   tasks=a.data||[];
   comments=b.data||[];
   render()
@@ -35,6 +43,7 @@ function render(){
 
   $("#board").innerHTML=cols.map(c=>{
     let list=shown.filter(t=>t.status===c[0]);
+
     return '<section class="column"><div class="column-head"><span><i style="background:'+c[2]+'"></i>'+c[1]+'<em class="count">'+list.length+'</em></span><button class="add-small" data-new="'+c[0]+'">＋</button></div><div class="cards">'+list.map(card).join("")+(!list.length?'<button class="card" data-new="'+c[0]+'" style="color:#8994a6;text-align:center;border-style:dashed">Добавить задачу</button>':"")+'</div></section>'
   }).join("");
 
@@ -98,12 +107,14 @@ $("#task-form").onsubmit=async e=>{
 
 $("#add-comment").onclick=async()=>{
   let body=$("#comment-input").value.trim();
+
   if(!body||!current)return;
 
   if((await db.from("task_comments").insert({task_id:current.id,body})).error)
     return alert("Не удалось добавить комментарий.");
 
   await db.from("tasks").update({updated_at:new Date().toISOString()}).eq("id",current.id);
+
   $("#comment-input").value="";
   await load();
   openTask(current.id)
@@ -142,8 +153,13 @@ $("#auth-form").onsubmit=async e=>{
       return
     }
 
+    if(!r.data?.session){
+      msg.textContent="Вход принят, но сессия не получена. Нажми Ctrl + F5 и попробуй ещё раз.";
+      return
+    }
+
     msg.textContent="";
-    await boot()
+    await showApp()
   }catch(error){
     msg.textContent="Ошибка соединения: "+error.message
   }finally{
@@ -205,7 +221,7 @@ $("#export").onclick=()=>{
     .join("\n");
 
   let a=document.createElement("a");
-  a.href=URL.createObjectURL(new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"}));
+  a.href=URL.createObjectURL(new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8}));
   a.download="выполненные-задачи.csv";
   a.click()
 };
