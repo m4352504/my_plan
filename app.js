@@ -1,4 +1,4 @@
-const URL="https://odusqcievoipwrtnsftz.supabase.co",KEY="sb_publishable_03VYlZENfp-OxRuyZvDe9g_tKS5ztDx",db=supabase.createClient(URL,KEY);
+const SUPABASE_URL="https://odusqcievoipwrtnsftz.supabase.co",KEY="sb_publishable_03VYlZENfp-OxRuyZvDe9g_tKS5ztDx",db=supabase.createClient(SUPABASE_URL,KEY);
 const $=s=>document.querySelector(s),esc=s=>String(s||"").replace(/[&<>"']/g,x=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[x]));
 const cols=[["inbox","Входящие","#94a3b8"],["progress","В работе","#0ea5e9"],["waiting","На контроле","#f59e0b"],["done","Сделано","#10b981"]];let tasks=[],comments=[],current=null;
 const fmt=x=>new Date(x).toLocaleString("ru-RU",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"});
