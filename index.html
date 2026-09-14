@@ -24,10 +24,43 @@
     <header><div><p class="eyebrow">МОЙ ПЛАН</p><h1>Задачи и ход работы</h1></div>
       <div class="header-actions"><button id="export" class="secondary">Выгрузить сделанное</button><button id="new-task">＋ Новая задача</button><button id="logout" class="icon" title="Выйти">↗</button></div>
     </header>
-    <section class="toolbar"><div class="search"><span>⌕</span><input id="search" placeholder="Поиск по задачам и тегам"></div>
-      <select id="category-filter"><option value="">Все категории</option><option value="work">Работа</option><option value="personal">Личное</option><option value="home">Дом</option></select>
-      <select id="status-filter"><option value="">Все статусы</option><option value="inbox">Входящие</option><option value="progress">В работе</option><option value="waiting">На контроле</option><option value="done">Сделано</option></select>
-    </section>
+   <section class="toolbar">
+  <div class="search">
+    <span>⌕</span>
+    <input id="search" placeholder="Поиск по задачам и тегам">
+  </div>
+
+  <select id="category-filter">
+    <option value="">Все категории</option>
+    <option value="work">Работа</option>
+    <option value="personal">Личное</option>
+    <option value="home">Дом</option>
+  </select>
+
+  <select id="status-filter">
+    <option value="">Все статусы</option>
+    <option value="inbox">Входящие</option>
+    <option value="progress">В работе</option>
+    <option value="waiting">На контроле</option>
+    <option value="done">Сделано</option>
+  </select>
+
+  <label>Создано с
+    <input id="created-from" type="date">
+  </label>
+
+  <label>по
+    <input id="created-to" type="date">
+  </label>
+
+  <label>Завершено с
+    <input id="completed-from" type="date">
+  </label>
+
+  <label>по
+    <input id="completed-to" type="date">
+  </label>
+</section>
     <p id="load-error" class="error" hidden></p>
     <section id="board" class="board"></section>
   </main>
